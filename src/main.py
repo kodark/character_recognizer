@@ -3,17 +3,31 @@ import numpy as np
 import scipy.stats as stats
 import os
 
+# K..T
+
 def main():
     # 11..36 : 1..55
     features = np.array(0)
-    for cat_n in range(11, 36 + 1):
+    #~ for cat_n in range(11, 36 + 1):
+    #~ for cat_n in range(21, 30 + 1):
+    for cat_n in range(21, 30 + 1):
         print(cat_n-10, '/', 36-10)
-        for image_n in range(1, 55 + 1):
-            path = get_image_path(cat_n, image_n)
-            image = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+        #~ for image_n in range(1, 55 + 1):
+        for image_name in os.listdir(os.path.join('..', 'data', 'Sample' + str(cat_n).zfill(3))):
+            path = os.path.join('..', 'data', 'Sample' + str(cat_n).zfill(3), image_name)
+            #~ path = get_image_path(cat_n, image_n)
+            image = cv2.imread(path, cv2.IMREAD_UNCHANGED)
+            if len(image.shape) > 2 and image.shape[2] == 4:
+                image = image[:,:,3]
+            else:
+                image = image[:,:,0]
+            
             (_, image) = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY_INV)
             image = clip_image(image)
+            #~ cv2.imshow('2' + path, image)
             features = calc_features(image, features, cat_n - 11)
+            
+            
     
     path_to_csv = os.path.join('..', 'data', 'train.csv')
     np.savetxt(path_to_csv, features, delimiter=',', header='area,perimeter,comp,mean_x,mean_y,var_x,var_y,assym_x,assym_y,conj_x,conj_y,conj_xy,conj_xy2,target')
@@ -47,13 +61,16 @@ def calc_features(image, features, target):
     area = px_area / (image.shape[0] * image.shape[1])
     px_perimeter = calc_perimeter(bin_image)
     perimeter = px_perimeter / (2 * image.shape[0] + 2 * image.shape[1])
-    comp = px_area / (px_perimeter * px_perimeter)
+    #~ perimeter = 1
+    #~ comp = 1
+    comp = px_area / (px_perimeter * px_perimeter + 1)
     (mean_x, mean_y, var_x, var_y, assym_x, assym_y) = calc_statistics(bin_image)
     (conj_x, conj_y, conj_xy, conj_xy2) = calc_conj(bin_image)
     (conj_x, conj_y, conj_xy, conj_xy2) = (conj_x, conj_y, conj_xy, conj_xy2) / px_area
     
     #~ print(px_area, px_perimeter, comp, (mean_x, mean_y, var_x, var_y, assym_x, assym_y), (conj_x, conj_y, conj_xy, conj_xy2))
     cur_feats = np.array([[area, perimeter, comp, mean_x, mean_y, var_x, var_y, assym_x, assym_y, conj_x, conj_y, conj_xy, conj_xy2, target]])
+    #~ print(cur_feats)
     if features.shape == ():
         features = cur_feats
     else:
@@ -63,9 +80,9 @@ def calc_features(image, features, target):
 
 
 def calc_perimeter(bin_image):
-    kernel = np.ones((5,5),np.uint8)
-    erosion = cv2.erode(bin_image,kernel,iterations = 1)
-    return np.sum(bin_image) - np.sum(erosion)
+    kernel = np.ones((2,2),np.uint8)
+    erosion = cv2.dilate(bin_image,kernel,iterations = 1)
+    return abs(np.sum(bin_image) - np.sum(erosion))
 
 
 def calc_statistics(bin_image):

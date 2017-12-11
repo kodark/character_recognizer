@@ -23,11 +23,11 @@ X_scaled = scaler.transform(X)
 
 clf = KNeighborsClassifier(n_neighbors=5)
 
-cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+cv = StratifiedKFold(n_splits=17, shuffle=True, random_state=42)
 scores = cross_val_score(clf, X_scaled, y, cv=cv, scoring='accuracy')
 print(scores)
 
-X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.33, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.3, random_state=42, stratify=y)
 
 clf.fit(X_train, y_train)
 y_pred = clf.predict(X_test)
@@ -39,8 +39,8 @@ df_pred = pd.DataFrame(y_pred)
 df_test = pd.get_dummies(df_test[0])
 df_pred = pd.get_dummies(df_pred[0])
 
-#~ df_pred.columns = list(ascii_letters[:26])
-#~ df_test.columns = list(ascii_letters[:26])
+#~ df_pred.columns = list(ascii_letters[11:20])
+#~ df_test.columns = list(ascii_letters[11:20])
 #~ corr = df_test.corrwith(df_pred)
 
 
@@ -49,6 +49,10 @@ def percConvert(ser):
 
 df_y = pd.DataFrame({'true':y_test, 'pred':y_pred}) 
 ct = pd.crosstab(df_y["true"],df_y["pred"],margins=True).apply(percConvert, axis=1)
+ct = ct.drop('All', axis=1)
+ct = ct.drop('All', axis=0)
+ct.columns = pd.Index(list(ascii_letters[10:20]), name='Predictions')
+ct.index = pd.Indexlis(t(ascii_letters[10:20]), name='True')
 sns.heatmap(ct, cmap='Greens')
 plt.show()
 
