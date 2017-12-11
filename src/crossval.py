@@ -11,7 +11,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 path_to_csv = os.path.join('..', 'data', 'train.csv')
 df = pd.read_csv(path_to_csv)
  
-features = df.values[:, 1:-1]
+features = df.values[:, :-1]
 labels = df.values[:, -1]
  
 x_train, x_test, y_train, y_test = train_test_split(features, labels, test_size=0.33, random_state=42)
